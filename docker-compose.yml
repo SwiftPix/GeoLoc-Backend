@@ -1,0 +1,27 @@
+services:
+  app:
+    container_name: user-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_DATABASE_URI=mongodb://mongo:27017
+      - MONGO_DATABASE_NAME=user-dev
+      - FLASK_DEBUG= 1
+    volumes:
+      - .:/src
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo-service
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
