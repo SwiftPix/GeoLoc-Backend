@@ -1,9 +1,11 @@
 from marshmallow import Schema, fields
 
 
-class TaxSchema(Schema):
+class CoordSchema(Schema):
     latitude = fields.Str(required=True, error_messages={"required": "A latitude é obrigatória"})
     longitude = fields.Str(required=True, error_messages={"required": "A longitude é obrigatória"})
+
+class TaxSchema(CoordSchema):
     sender_currency = fields.Str(required=True, error_messages={"required": "A moeda desejada é obrigatória"})
 
 class ConversionCountrySchema(Schema):
