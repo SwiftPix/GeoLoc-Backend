@@ -1,14 +1,19 @@
+import logging
 import requests
 from settings import settings
 from database.models import Currency
 from utils.exceptions import CountryNotFound, CurrenciesNotFound, DesiredCurrencyNotFound, ExchangeApiError, GoogleMapsApiError, TaxNotFound
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 class GeoController:
     def get_country(self, latitude, longitude):
         url = f"{settings.GOOGLE_MAPS_API}?latlng={latitude},{longitude}&key={settings.GOOGLE_API_KEY}"
         response = requests.get(url)
-
+        logger.info(f"Resposta do servidor de geolocalização: {response.status_code}")
         if response.status_code != 200:
+            logger.error(f"Erro no serviço de geolocalização: {response.text}")
             raise GoogleMapsApiError("Geolocalização está indisponível")
         data = response.json()
         for address_component in data["results"][0]["address_components"]:
@@ -19,7 +24,9 @@ class GeoController:
     def get_exchanges(self, currency):
         url = f"{settings.CURRENCY_API}/{settings.CURRENCY_API_KEY}/latest/{currency}"
         response = requests.get(url)
+        logger.info(f"Resposta do servidor de câmbio: {response.status_code}")
         if response.status_code != 200:
+            logger.error(f"Erro no serviço de câmbio: {response.text}")
             raise ExchangeApiError("Taxas das moedas está indisponível")
         data = response.json()
         return data.get("conversion_rates", {})
@@ -27,7 +34,9 @@ class GeoController:
     def get_conversion(self, base_currency, desired_currency, amount):
         url = f"{settings.CURRENCY_API}/{settings.CURRENCY_API_KEY}/pair/{base_currency}/{desired_currency}/{amount}"
         response = requests.get(url)
+        logger.info(f"Resposta do servidor de câmbio: {response.status_code}")
         if response.status_code != 200:
+            logger.error(f"Erro no serviço de câmbio: {response.text}")
             raise ExchangeApiError("Taxas das moedas está indisponível")
 
         data = response.json()

@@ -1,9 +1,13 @@
+import logging
 from flask import Blueprint, request, jsonify
 from controllers.geoloc_controller import GeoController
 from schemas import ConversionCountrySchema, ConversionSchema, CoordSchema, TaxSchema
 from utils.exceptions import CountryNotFound, CurrenciesNotFound, DesiredCurrencyNotFound, ExchangeApiError, GoogleMapsApiError, TaxNotFound
 
 bp = Blueprint("geoloc", __name__)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 @bp.route("/health", methods=["GET"])
 def health_check():
@@ -21,10 +25,13 @@ def get_tax_by_coords():
         )
         return {"tax": tax}
     except (GoogleMapsApiError, ExchangeApiError) as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 500, "message": str(e)}), 500
     except (CountryNotFound, CurrenciesNotFound, TaxNotFound) as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 400, "message": str(e)}), 400
     
 @bp.route("/conversion", methods=["POST"])
@@ -41,10 +48,13 @@ def get_conversion():
             raise TaxNotFound("Conversão não encontrada")
         return {"result": exchange_currency}
     except ExchangeApiError as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 500, "message": str(e)}), 500
     except TaxNotFound as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 400, "message": str(e)}), 400
     
 @bp.route("/conversion_by_country", methods=["POST"])
@@ -61,8 +71,10 @@ def get_conversion_by_country():
             raise DesiredCurrencyNotFound("Conversão não encontrada")
         return {"result": exchange_currency}
     except (DesiredCurrencyNotFound, TaxNotFound) as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 400, "message": str(e)}), 400
 
 @bp.route("/coords/currency", methods=["POST"])
@@ -76,10 +88,13 @@ def get_currency_by_coords():
         )
         return {"currency": currency}
     except GoogleMapsApiError as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 500, "message": str(e)}), 500
     except CountryNotFound as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 400, "message": str(e)}), 400
 
 @bp.route("/currencies", methods=["GET"])
@@ -90,8 +105,11 @@ def get_currencies():
             raise CurrenciesNotFound("Não foi possível buscar as moedas")
         return {"result": currencies}
     except GoogleMapsApiError as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 500, "message": str(e)}), 500
     except CurrenciesNotFound as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
     except Exception as e:
+        logger.error(f"Error: {str(e)}")
         return jsonify({"status": 400, "message": str(e)}), 400
