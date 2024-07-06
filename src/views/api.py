@@ -1,5 +1,6 @@
 import logging
 from flask import Blueprint, request, jsonify
+from marshmallow import ValidationError
 from controllers.geoloc_controller import GeoController
 from schemas import ConversionCountrySchema, ConversionSchema, CoordSchema, TaxSchema
 from utils.exceptions import CountryNotFound, CurrenciesNotFound, DesiredCurrencyNotFound, ExchangeApiError, GoogleMapsApiError, TaxNotFound
@@ -24,10 +25,13 @@ def get_tax_by_coords():
             validated_payload["sender_currency"]
         )
         return {"tax": tax}
+    except ValidationError as e:
+        logger.error(f"Error: {str(e)}")
+        return jsonify({"status": 422, "message": str(e)}), 422
     except (GoogleMapsApiError, ExchangeApiError) as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"status": 500, "message": str(e)}), 500
-    except (CountryNotFound, CurrenciesNotFound, TaxNotFound) as e:
+    except (CountryNotFound, CurrenciesNotFound, TaxNotFound, DesiredCurrencyNotFound) as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
     except Exception as e:
@@ -38,7 +42,7 @@ def get_tax_by_coords():
 def get_conversion():
     try:
         payload = request.get_json()
-        validated_payload = ConversionCountrySchema().load(payload)
+        validated_payload = ConversionSchema().load(payload)
         exchange_currency = GeoController().get_conversion(
             validated_payload["sender_currency"],
             validated_payload["receiver_currency"],
@@ -47,6 +51,9 @@ def get_conversion():
         if not exchange_currency:
             raise TaxNotFound("Conversão não encontrada")
         return {"result": exchange_currency}
+    except ValidationError as e:
+        logger.error(f"Error: {str(e)}")
+        return jsonify({"status": 422, "message": str(e)}), 422
     except ExchangeApiError as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"status": 500, "message": str(e)}), 500
@@ -61,7 +68,7 @@ def get_conversion():
 def get_conversion_by_country():
     try:
         payload = request.get_json()
-        validated_payload = ConversionSchema().load(payload)
+        validated_payload = ConversionCountrySchema().load(payload)
         exchange_currency = GeoController().get_conversion_by_country(
             validated_payload["sender_country"],
             validated_payload["receiver_country"],
@@ -70,6 +77,9 @@ def get_conversion_by_country():
         if not exchange_currency:
             raise DesiredCurrencyNotFound("Conversão não encontrada")
         return {"result": exchange_currency}
+    except ValidationError as e:
+        logger.error(f"Error: {str(e)}")
+        return jsonify({"status": 422, "message": str(e)}), 422
     except (DesiredCurrencyNotFound, TaxNotFound) as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
@@ -87,6 +97,9 @@ def get_currency_by_coords():
             validated_payload["longitude"]
         )
         return {"currency": currency}
+    except ValidationError as e:
+        logger.error(f"Error: {str(e)}")
+        return jsonify({"status": 422, "message": str(e)}), 422
     except GoogleMapsApiError as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"status": 500, "message": str(e)}), 500
@@ -104,9 +117,6 @@ def get_currencies():
         if not currencies:
             raise CurrenciesNotFound("Não foi possível buscar as moedas")
         return {"result": currencies}
-    except GoogleMapsApiError as e:
-        logger.error(f"Error: {str(e)}")
-        return jsonify({"status": 500, "message": str(e)}), 500
     except CurrenciesNotFound as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"status": 404, "message": str(e)}), 404
