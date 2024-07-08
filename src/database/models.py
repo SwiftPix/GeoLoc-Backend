@@ -35,4 +35,6 @@ class Currency:
     
     def find_by_country(country):
         result = db.currency.find_one({"country_iso2": country})
-        return result["currency"]
+        if result:
+            return result["currency"]
+        return {}
