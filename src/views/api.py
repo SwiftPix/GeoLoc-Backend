@@ -96,7 +96,7 @@ def get_currency_by_coords():
             validated_payload["latitude"],
             validated_payload["longitude"]
         )
-        return {"currency": currency}
+        return currency
     except ValidationError as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"status": 422, "message": str(e)}), 422

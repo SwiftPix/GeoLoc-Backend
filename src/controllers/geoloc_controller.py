@@ -50,6 +50,7 @@ class GeoController:
         base_currency = Currency.find_by_country(current_country)
         if not base_currency:
             raise DesiredCurrencyNotFound("Moeda desejada não encontrada")
+        base_currency = base_currency["currency"]
         tax = self.get_tax(base_currency, desired_currency)
         if not tax:
             raise TaxNotFound("Conversão para moeda desejada não encontrada")
@@ -70,10 +71,13 @@ class GeoController:
         if not base_currency:
             raise DesiredCurrencyNotFound("Moeda para país atual não encontrada")
 
+        base_currency = base_currency["currency"]
         desired_currency = Currency.find_by_country(receiver_country)
+
         if not desired_currency:
             raise DesiredCurrencyNotFound("Moeda para país desejado não encontrada")
         
+        desired_currency = desired_currency["currency"]
         conversion = self.get_conversion(base_currency, desired_currency, amount)
 
         if not conversion:
